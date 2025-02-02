@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Order Shipping Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #003366;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            color: #003366;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        th, td {
+            border: 1px solid #003366;
+            padding: 10px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+    <script>
+        // Refresh the page every 5 seconds
+        setInterval(function() {
+            location.reload();  // Reload the page
+        }, 3000);  // 5000 milliseconds = 5 seconds
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>🚚 Warehouse Order Shipping Status</h2>
+        <table>
+            <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Shipping With</th>
+                <th>Status</th>
+            </tr>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order[0] }}</td>
+                <td>{{ order[1] }}</td>
+                <td>{{ order[2] }}</td>
+                <td>{{ order[3] }}</td>
+                <td>{{ order[4] }}</td>
+                <td>{{ order[5] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

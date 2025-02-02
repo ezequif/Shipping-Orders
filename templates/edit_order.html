@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Order</title>
+</head>
+<body>
+    <h2>Edit Order #{{ order[0] }}</h2>
+    <form method="POST">
+        <label>Customer:</label>
+        <input type="text" name="customer" value="{{ order[1] }}" required>
+
+        <label>Product:</label>
+        <input type="text" name="product" value="{{ order[2] }}" required>
+
+        <label>Quantity:</label>
+        <input type="number" name="quantity" value="{{ order[3] }}" required>
+
+        <label>Shipping With:</label>
+        <input type="text" name="shipping_with" value="{{ order[4] }}" required>
+
+        <label>Truck ETA:</label>
+        <input type="text" name="truck_eta" value="{{ order[5] }}" required>
+
+        <label>Status:</label>
+        <input type="text" name="status" value="{{ order[6] }}" required>
+
+        <button type="submit">Save Changes</button>
+    </form>
+
+    <a href="/admin">← Back to Admin Panel</a>
+</body>
+</html>

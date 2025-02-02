@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        td {
+            vertical-align: middle;
+        }
+        td:last-child {
+            display: flex;
+            flex-direction: column; /* ✅ Moves Save button above Edit/Delete */
+            align-items: center;
+            gap: 5px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px; /* ✅ Adds spacing between Edit & Delete buttons */
+        }
+        .edit-btn, .save-btn, .delete-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        .save-btn {
+            background-color: #28a745;
+            color: white;
+            width: 100%; /* ✅ Makes Save button full width */
+            display: none;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+        }
+        .back-btn {
+            margin-top: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+    <script>
+        function enableEdit(orderNumber) {
+            let row = document.getElementById(`row-${orderNumber}`);
+            row.querySelectorAll(".edit-input").forEach(input => input.style.display = "inline-block");
+            row.querySelectorAll(".text-data").forEach(span => span.style.display = "none");
+
+            row.querySelector(`.edit-btn`).style.display = "none";
+            row.querySelector(`.save-btn`).style.display = "block";
+        }
+
+        function saveEdit(orderNumber) {
+            let row = document.getElementById(`row-${orderNumber}`);
+            let updatedData = {
+                order_number: orderNumber,
+                customer: row.querySelector(".customer").value,
+                product: row.querySelector(".product").value,
+                quantity: row.querySelector(".quantity").value,
+                shipping_with: row.querySelector(".shipping_with").value,
+                status: row.querySelector(".status").value
+            };
+
+            fetch("/update_order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedData)
+            }).then(response => response.json())
+            .then(data => {
+                location.reload();  // ✅ Instantly reload the page after saving
+            }).catch(error => {
+                console.error("Error updating order:", error);
+            });
+        }
+
+        function deleteOrder(orderNumber) {
+            fetch(`/delete_order/${orderNumber}`, {
+                method: "GET"
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();  // ✅ Instantly delete and refresh
+                }
+            }).catch(error => {
+                console.error("Error deleting order:", error);
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>🛠 Manage Orders</h2>
+        <table>
+            <tr>
+                <th>Sage Order #</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Shipping With</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            {% for order in orders %}
+            <tr id="row-{{ order[0] }}">
+                <td>{{ order[0] }}</td>
+                <td>
+                    <span class="text-data">{{ order[1] }}</span>
+                    <input type="text" class="edit-input customer" value="{{ order[1] }}" style="display:none;">
+                </td>
+                <td>
+                    <span class="text-data">{{ order[2] }}</span>
+                    <input type="text" class="edit-input product" value="{{ order[2] }}" style="display:none;">
+                </td>
+                <td>
+                    <span class="text-data">{{ order[3] }}</span>
+                    <input type="number" class="edit-input quantity" value="{{ order[3] }}" style="display:none;">
+                </td>
+                <td>
+                    <span class="text-data">{{ order[4] }}</span>
+                    <input type="text" class="edit-input shipping_with" value="{{ order[4] }}" style="display:none;">
+                </td>
+                <td>
+                    <span class="text-data">{{ order[5] }}</span>
+                    <select class="edit-input status" style="display:none;">
+                        <option value="Preparing Order" {% if order[5] == "Preparing Order" %}selected{% endif %}>Preparing Order</option>
+                        <option value="Order Staged" {% if order[5] == "Order Staged" %}selected{% endif %}>Order Staged</option>
+                        <option value="Waiting QC" {% if order[5] == "Waiting QC" %}selected{% endif %}>Waiting QC</option>
+                        <option value="Truck Scheduled" {% if order[5] == "Truck Scheduled" %}selected{% endif %}>Truck Scheduled</option>
+                        <option value="Delayed" {% if order[5] == "Delayed" %}selected{% endif %}>Delayed</option>
+                        <option value="Shipped" {% if order[5] == "Shipped" %}selected{% endif %}>Shipped</option>
+                    </select>
+                </td>
+                <td>
+                    <button class="save-btn" onclick="saveEdit('{{ order[0] }}')" style="display: none;">Save</button>
+                    <div class="action-buttons">
+                        <button class="edit-btn" onclick="enableEdit('{{ order[0] }}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteOrder('{{ order[0] }}')">Delete</button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <a href="{{ url_for('admin') }}">
+            <button class="back-btn">Back to Admin Panel</button>
+        </a>
+    </div>
+</body>
+</html>

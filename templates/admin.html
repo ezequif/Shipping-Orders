@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Manage Orders</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            color: #003366;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            color: #003366;
+            margin-bottom: 15px;
+        }
+        .order-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .order-form input,
+        .order-form select {
+            width: 48%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .order-form input:focus,
+        .order-form select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+        }
+        .order-form button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .order-form button:hover {
+            background-color: #0056b3;
+        }
+        .manage-orders-btn {
+            margin-top: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .manage-orders-btn:hover {
+            background-color: #218838;
+        }
+        /* Table styling for the Live Warehouse Monitor Preview */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        th, td {
+            border: 1px solid #003366;
+            padding: 10px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📋 Add New Order</h2>
+        <form class="order-form" method="POST" action="{{ url_for('admin') }}">
+    <input type="text" name="order_number" placeholder="Sage Order #" required>
+    <input type="text" name="customer" placeholder="Customer" required>
+    <input type="text" name="product" placeholder="Product" required>
+    <input type="number" name="quantity" placeholder="Qty" required>
+    <input type="text" name="shipping_with" placeholder="Shipping With" required>
+    <select name="status" required>
+        <option value="Preparing Order">Preparing Order</option>
+        <option value="Order Staged">Order Staged</option>
+        <option value="Waiting QC">Waiting QC</option>
+        <option value="Truck Scheduled">Truck Scheduled</option>
+        <option value="Delayed">Delayed</option>
+        <option value="Shipped">Shipped</option>
+    </select>
+    <button type="submit">➕ Add Order</button>
+</form>
+
+
+        <h2>📦 Live Warehouse Monitor Preview</h2>
+        <table>
+            <tr>
+                <th>Sage Order #</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Shipping With</th>
+                <th>Status</th>
+            </tr>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order[0] }}</td>
+                <td>{{ order[1] }}</td>
+                <td>{{ order[2] }}</td>
+                <td>{{ order[3] }}</td>
+                <td>{{ order[4] }}</td>
+                <td>{{ order[5] }}</td>  <!-- ✅ Should now correctly display status -->
+
+            </tr>
+            {% endfor %}
+        </table>
+
+        <!-- Button to go to Manage Orders page -->
+        <a href="{{ url_for('manage_orders') }}">
+            <button class="manage-orders-btn">🛠 Manage Orders</button>
+        </a>
+    </div>
+</body>
+</html>

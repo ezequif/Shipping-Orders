@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚚 Warehouse Order Shipping Status</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+
+    <style>
+        /* ✅ General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* ✅ Container Settings */
+        .container {
+            width: 90%;
+            max-width: 1600px;
+            margin: auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ✅ Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 24px; /* ✅ Increased font size */
+        }
+
+        th, td {
+            border: 2px solid #000;
+            padding: 15px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            font-size: 28px; /* ✅ Bigger text for better visibility */
+        }
+
+        /* ✅ Status Color Coding */
+        .status[data-status="Shipped"] {
+            background-color: #28a745; /* Green */
+            color: white;
+        }
+
+        .status[data-status="Preparing Order"] {
+            background-color: #ffc107; /* Yellow */
+            color: black;
+        }
+
+        .status[data-status="Waiting QC"] {
+            background-color: #ff9800; /* Orange */
+            color: white;
+        }
+
+        .status[data-status="Truck Scheduled"] {
+            background-color: #17a2b8; /* Blue */
+            color: white;
+        }
+
+        /* ✅ Fix for Delayed Orders */
+        .status[data-status="Delayed"] {
+            background-color: red;
+            color: white;
+            font-weight: bold;
+            animation: blink 1s infinite;
+        }
+
+        /* ✅ Blinking Effect for Delayed Orders */
+        @keyframes blink {
+            50% { opacity: 0.3; }
+        }
+
+        /* ✅ Responsive Design for Warehouse Monitors */
+        @media screen and (max-width: 1200px) {
+            table {
+                font-size: 20px; /* Adjust for smaller screens */
+            }
+            th {
+                font-size: 24px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            table {
+                font-size: 16px;
+            }
+            th {
+                font-size: 20px;
+            }
+        }
+    </style>
+
+    <script>
+        var socket = io.connect("http://" + document.domain + ":" + location.port);
+
+        // ✅ Real-time updates when new data is received
+        socket.on("update_orders", function(data) {
+            let orders = data.orders;
+            let tableBody = document.getElementById("ordersTable");
+            tableBody.innerHTML = ""; // Clear table before adding updated data
+
+            orders.forEach(order => {
+                let row = `<tr>
+                    <td>${order[0]}</td>
+                    <td>${order[1]}</td>
+                    <td>${order[2]}</td>
+                    <td>${order[3]}</td>
+                    <td>${order[4]}</td>
+                    <td class="status" data-status="${order[5].trim()}">${order[5]}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        });
+    </script>
+
+</head>
+<body>
+    <div class="container">
+        <h2>🚚 Warehouse Order Shipping Status</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sage Order #</th>
+                    <th>Customer</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Shipping With</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="ordersTable">
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order[0] }}</td>
+                    <td>{{ order[1] }}</td>
+                    <td>{{ order[2] }}</td>
+                    <td>{{ order[3] }}</td>
+                    <td>{{ order[4] }}</td>
+                    <td class="status" data-status="{{ order[5] | trim }}">{{ order[5] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
