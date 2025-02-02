@@ -4,8 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🚚 Warehouse Order Shipping Status</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"> </script>
 
+    <script>
+    var socket = io.connect("https://" + document.domain);
+
+    // ✅ Listen for WebSocket event and update table dynamically
+    socket.on("update_orders", function(data) {
+        let orders = data.orders;
+        let tableBody = document.getElementById("ordersTable");
+        tableBody.innerHTML = ""; // Clear the table before adding updated data
+
+        orders.forEach(order => {
+            let row = `<tr>
+                <td>${order[0]}</td>
+                <td>${order[1]}</td>
+                <td>${order[2]}</td>
+                <td>${order[3]}</td>
+                <td>${order[4]}</td>
+                <td class="status" data-status="${order[5].trim()}">${order[5]}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    });
+    </script>
     <style>
         /* ✅ General Styles */
         body {
