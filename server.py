@@ -94,6 +94,13 @@ def warehouse():
     """Warehouse Order Shipping Status Page"""
     orders = get_orders()
     return render_template("warehouse.html", orders=orders)
+@app.route("/")
+def home():
+    return redirect(url_for("warehouse"))  # ✅ Redirect root to warehouse page
+
+import os
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 10000))  # ✅ Use Render's PORT
+    socketio.run(app, host="0.0.0.0", port=port)
+
