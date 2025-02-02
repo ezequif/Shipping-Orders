@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_socketio import SocketIO
 import sqlite3
