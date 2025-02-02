@@ -19,6 +19,10 @@ def get_orders():
     conn.close()
     return orders
 
+from flask_socketio import SocketIO
+
+socketio = SocketIO(app, cors_allowed_origins="*")  # ✅ Enable WebSockets
+
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     """Admin Panel - Manage Orders."""
@@ -39,12 +43,13 @@ def admin():
         conn.commit()
         conn.close()
 
-        # ✅ Emit real-time update to all connected clients
+        # ✅ Emit real-time update to all warehouse monitors
         socketio.emit("update_orders", {"orders": get_orders()})
         return redirect(url_for("admin"))
 
     orders = get_orders()
     return render_template("admin.html", orders=orders)
+
 
 @app.route("/update_order", methods=["POST"])
 def update_order():
