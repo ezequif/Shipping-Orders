@@ -23,29 +23,30 @@ from flask_socketio import SocketIO
 
 socketio = SocketIO(app, cors_allowed_origins="*")  # ✅ Enable WebSockets
 
+
 @app.route("/admin", methods=["GET", "POST"])
-@app.route("/admin", methods=["POST"])
 def admin():
     """Handles order entry with quantity allowing letters."""
-    order_number = request.form.get("order_number")
-    customer = request.form.get("customer")
-    product = request.form.get("product")
-    quantity = request.form.get("quantity")  # ✅ Now stores text input
-    shipping_with = request.form.get("shipping_with")
-    status = request.form.get("status")
+    if request.method == "POST":
+        order_number = request.form.get("order_number")
+        customer = request.form.get("customer")
+        product = request.form.get("product")
+        quantity = request.form.get("quantity")  # ✅ Allows text input
+        shipping_with = request.form.get("shipping_with")
+        status = request.form.get("status")
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO orders (order_number, customer, product, quantity, shipping_with, status)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (order_number, customer, product, quantity, shipping_with, status))
-    
-    conn.commit()
-    conn.close()
+        conn = get_db_connection()  # ✅ Use the updated function
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO orders (order_number, customer, product, quantity, shipping_with, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (order_number, customer, product, quantity, shipping_with, status))
+        
+        conn.commit()
+        conn.close()  # ✅ Always close connections
 
-    socketio.emit("update_orders", {"orders": get_orders()})  # ✅ Real-time update
-    return redirect(url_for("admin"))
+        socketio.emit("update_orders", {"orders": get_orders()})  # ✅ Real-time update
+        return redirect(url_for("admin"))
 
 
 
@@ -100,6 +101,11 @@ def warehouse():
 @app.route("/")
 def home():
     return redirect(url_for("warehouse"))  # ✅ Redirect root to warehouse page
+
+def get_db_connection():
+    """Creates a database connection allowing multiple threads to access SQLite."""
+    return sqlite3.connect("data/orders.db", check_same_thread=False)
+
 
 import os
 
