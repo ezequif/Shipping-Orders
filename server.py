@@ -65,7 +65,7 @@ def admin():
         conn.close()
 
         # ✅ Emit real-time update to all warehouse monitors
-        socketio.emit("update_orders", {"orders": get_orders()}, broadcast=True)
+        socketio.emit("update_orders", {"orders": get_orders()}, namespace="/")
         return redirect(url_for("admin"))
 
     orders = get_orders()
@@ -91,8 +91,8 @@ def update_order():
     conn.commit()
     conn.close()
 
-    # ✅ Emit real-time update after order edit
-    socketio.emit("update_orders", {"orders": get_orders()}, broadcast=True)
+    # ✅ Emit real-time update
+    socketio.emit("update_orders", {"orders": get_orders()}, namespace="/")
     return jsonify({"message": "Order updated successfully"})
 
 # ✅ Delete Order
@@ -104,8 +104,8 @@ def delete_order(order_number):
     conn.commit()
     conn.close()
 
-    # ✅ Emit real-time update after order deletion
-    socketio.emit("update_orders", {"orders": get_orders()}, broadcast=True)
+    # ✅ Emit real-time update
+    socketio.emit("update_orders", {"orders": get_orders()}, namespace="/")
     return jsonify({"message": "Order deleted successfully"})
 
 # ✅ Manage Orders Page
