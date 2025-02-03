@@ -24,31 +24,29 @@ from flask_socketio import SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*")  # ✅ Enable WebSockets
 
 @app.route("/admin", methods=["GET", "POST"])
+@app.route("/admin", methods=["POST"])
 def admin():
-    """Admin Panel - Manage Orders."""
-    if request.method == "POST":
-        order_number = request.form.get("order_number")
-        customer = request.form.get("customer")
-        product = request.form.get("product")
-        quantity = request.form.get("quantity")
-        shipping_with = request.form.get("shipping_with")
-        status = request.form.get("status")
+    """Handles order entry with quantity allowing letters."""
+    order_number = request.form.get("order_number")
+    customer = request.form.get("customer")
+    product = request.form.get("product")
+    quantity = request.form.get("quantity")  # ✅ Now stores text input
+    shipping_with = request.form.get("shipping_with")
+    status = request.form.get("status")
 
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute("""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
         INSERT INTO orders (order_number, customer, product, quantity, shipping_with, status)
         VALUES (?, ?, ?, ?, ?, ?)
-        """, (order_number, customer, product, quantity, shipping_with, status))
-        conn.commit()
-        conn.close()
+    """, (order_number, customer, product, quantity, shipping_with, status))
+    
+    conn.commit()
+    conn.close()
 
-        # ✅ Emit real-time update to all warehouse monitors
-        socketio.emit("update_orders", {"orders": get_orders()})
-        return redirect(url_for("admin"))
+    socketio.emit("update_orders", {"orders": get_orders()})  # ✅ Real-time update
+    return redirect(url_for("admin"))
 
-    orders = get_orders()
-    return render_template("admin.html", orders=orders)
 
 
 @app.route("/update_order", methods=["POST"])
