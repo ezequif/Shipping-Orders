@@ -1,115 +1,100 @@
-import eventlet
-eventlet.monkey_patch()
-
+import os
+import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_socketio import SocketIO
-import sqlite3
+import eventlet
+
+# ✅ Ensure eventlet is patched first
+eventlet.monkey_patch()
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")  # ✅ Enable WebSockets
 
-DB_FILE = "data/orders.db"
+DB_FILE = "data/orders.db"  # ✅ Database path
 
-def get_orders():
-    """Retrieve all orders from the database."""
+# ✅ Function to create database & tables if missing
+def create_database():
+    """Creates the database and tables if they don't exist."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    cursor.execute("SELECT order_number, customer, product, quantity, shipping_with, status FROM orders")
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS orders (
+        order_number TEXT PRIMARY KEY,
+        customer TEXT NOT NULL,
+        product TEXT NOT NULL,
+        quantity TEXT NOT NULL,  -- ✅ Allows letters & numbers
+        shipping_with TEXT NOT NULL,
+        status TEXT NOT NULL
+    )
+    """)
+    conn.commit()
+    conn.close()
+
+# ✅ Call this function at startup
+create_database()
+
+# ✅ Function to get a database connection (prevents locking)
+def get_db_connection():
+    return sqlite3.connect(DB_FILE, check_same_thread=False)
+
+# ✅ Function to get all orders from the database
+def get_orders():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM orders")
     orders = cursor.fetchall()
     conn.close()
     return orders
 
-from flask_socketio import SocketIO
+# ✅ Root route (redirects to Warehouse Monitor)
+@app.route("/")
+def home():
+    return redirect(url_for("warehouse"))
 
-socketio = SocketIO(app, cors_allowed_origins="*")  # ✅ Enable WebSockets
+# ✅ Warehouse Monitor route
+@app.route("/warehouse")
+def warehouse():
+    orders = get_orders()
+    return render_template("warehouse.html", orders=orders)
 
-
+# ✅ Admin Panel route
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-    """Handles order entry with quantity allowing letters."""
     if request.method == "POST":
         order_number = request.form.get("order_number")
         customer = request.form.get("customer")
         product = request.form.get("product")
-        quantity = request.form.get("quantity")  # ✅ Allows text input
+        quantity = request.form.get("quantity")  # ✅ Now allows text input
         shipping_with = request.form.get("shipping_with")
         status = request.form.get("status")
 
-        conn = get_db_connection()  # ✅ Use the updated function
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO orders (order_number, customer, product, quantity, shipping_with, status)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (order_number, customer, product, quantity, shipping_with, status))
-        
-        conn.commit()
-        conn.close()  # ✅ Always close connections
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO orders (order_number, customer, product, quantity, shipping_with, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (order_number, customer, product, quantity, shipping_with, status))
+            conn.commit()
+            conn.close()
 
-        socketio.emit("update_orders", {"orders": get_orders()})  # ✅ Real-time update
+            # ✅ Emit real-time update to all warehouse monitors
+            socketio.emit("update_orders", {"orders": get_orders()})
+
+        except sqlite3.IntegrityError:
+            return "Error: Order number must be unique!", 400
+
         return redirect(url_for("admin"))
 
-
-
-@app.route("/update_order", methods=["POST"])
-def update_order():
-    """Update an order from the Manage Orders page."""
-    data = request.json
-    order_number = data.get("order_number")
-    customer = data.get("customer")
-    product = data.get("product")
-    quantity = data.get("quantity")
-    shipping_with = data.get("shipping_with")
-    status = data.get("status")
-
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("""
-    UPDATE orders SET customer=?, product=?, quantity=?, shipping_with=?, status=?
-    WHERE order_number=?
-    """, (customer, product, quantity, shipping_with, status, order_number))
-    conn.commit()
-    conn.close()
-
-    # ✅ Emit real-time update after order edit
-    socketio.emit("update_orders", {"orders": get_orders()})
-    return jsonify({"message": "Order updated successfully"})
-
-@app.route("/delete_order/<order_number>", methods=["GET"])
-def delete_order(order_number):
-    """Delete an order."""
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM orders WHERE order_number = ?", (order_number,))
-    conn.commit()
-    conn.close()
-
-    # ✅ Emit real-time update after order deletion
-    socketio.emit("update_orders", {"orders": get_orders()})
-    return jsonify({"message": "Order deleted successfully"})
-
-@app.route("/manage_orders")
-def manage_orders():
-    """Manage Orders Page."""
     orders = get_orders()
-    return render_template("manage_orders.html", orders=orders)
+    return render_template("admin.html", orders=orders)
 
-@app.route("/warehouse")
-def warehouse():
-    """Warehouse Order Shipping Status Page"""
-    orders = get_orders()
-    return render_template("warehouse.html", orders=orders)
-@app.route("/")
-def home():
-    return redirect(url_for("warehouse"))  # ✅ Redirect root to warehouse page
+# ✅ API route to fetch orders (for debugging)
+@app.route("/api/orders")
+def api_orders():
+    return jsonify({"orders": get_orders()})
 
-def get_db_connection():
-    """Creates a database connection allowing multiple threads to access SQLite."""
-    return sqlite3.connect("data/orders.db", check_same_thread=False)
-
-
-import os
-
+# ✅ Flask-SocketIO runs on Render with assigned port
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # ✅ Use Render's PORT
+    port = int(os.environ.get("PORT", 10000))  # ✅ Uses Render's assigned port
     socketio.run(app, host="0.0.0.0", port=port)
-
